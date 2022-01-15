@@ -422,6 +422,7 @@ Matrix<double,9,1> initializeWithDimension(cv::Mat &all_lines_mat, Vector3d &obj
     double max_iou=0;
     double min_angle_error = 100;
     double rot_final1=0,rot_final2=0,rot_final=0;
+    std::vector<Eigen::Vector3d> yaw_error, yaw_error_full;
     for(double yaw=-3.14159; yaw<=3.14159; yaw+=0.1)
     {
         double dis=0;
@@ -476,6 +477,11 @@ Matrix<double,9,1> initializeWithDimension(cv::Mat &all_lines_mat, Vector3d &obj
         double total_angle_diff = box_edge_alignment_angle_error(all_vp_bound_edge_angles, vps_box_edge_pt_ids, corners_2d);
         //std::cout<<"angle_error: "<<total_angle_diff<<std::endl;
 
+        if(!few_edges && total_angle_diff<2.0)
+            yaw_error.push_back(Eigen::Vector3d(yaw,bb_iou,total_angle_diff));
+        yaw_error_full.push_back(Eigen::Vector3d(yaw,bb_iou,total_angle_diff));
+
+        /*
         if(few_edges || total_angle_diff>1.0)
         {
             if(bb_iou > max_iou)
@@ -492,12 +498,30 @@ Matrix<double,9,1> initializeWithDimension(cv::Mat &all_lines_mat, Vector3d &obj
                 rot_final2 = yaw;
             }
         }
-
+        */
     }
-    if(!rot_final2)
-        rot_final = rot_final1;
+
+    if(!yaw_error.empty() && yaw_error[0](2)<2.0)
+    {
+        std::sort(yaw_error.begin(),yaw_error.end(),[](Eigen::Vector3d& a, Eigen::Vector3d b){return a(2)<b(2);});
+        std::vector<Eigen::Vector3d> yaw_error_candidate(yaw_error.begin(),yaw_error.end());
+
+        if(yaw_error.size()>10)
+            yaw_error_candidate = std::vector<Eigen::Vector3d>(yaw_error.begin(),yaw_error.begin()+10);
+
+        std::sort(yaw_error_candidate.begin(),yaw_error_candidate.end(),[](Eigen::Vector3d a, Eigen::Vector3d b){return a(1)>b(1);});
+        rot_final = yaw_error_candidate[0](0);
+    }
     else
-        rot_final = rot_final2;
+    {
+        std::sort(yaw_error_full.begin(),yaw_error_full.end(),[](Eigen::Vector3d a, Eigen::Vector3d b){return a(1)>b(1);});
+        rot_final = yaw_error_full[0](0);
+    }
+
+    //if(!rot_final2)
+        //rot_final = rot_final1;
+    //else
+        //rot_final = rot_final2;
     //std::cout<<"rot: "<<rot_final<<std::endl;
 
     Eigen::Matrix<double,9,1> min_vec;
