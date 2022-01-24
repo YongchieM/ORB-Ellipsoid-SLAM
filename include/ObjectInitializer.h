@@ -16,6 +16,7 @@ Matrix<double,9,1> initializeWithCuboid(g2o::SE3Quat campose_cw, Eigen::Vector4d
 Matrix<double,9,1> initializeWithCentre(Vector3d& obj_size, double height, g2o::SE3Quat campose_cw, Eigen::Vector4d& bbox_value, Eigen::Matrix3d& calib);
 //initialization with priori dimension and edge information
 Matrix<double,9,1> initializeWithDimension(cv::Mat& all_lines_mat, Vector3d& obj_size, double height, g2o::SE3Quat campose_cw, Eigen::Vector4d& bbox_value, Matrix3d& calib);
+Matrix<double,9,1> initializeWithYaw(cv::Mat& all_lines_mat, Vector3d& obj_size, double height, g2o::SE3Quat campose_cw, Eigen::Vector4d& bbox_value, Matrix3d& calib);
 
 //
 MatrixXd fromDetectionsToLines(VectorXd &detection_mat);
